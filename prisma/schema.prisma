@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id            String      @id @default(cuid())
+  name          String
+  phone         String
+  email         String
+  concern       String?
+  treatment     String?
+  procedure     String?
+  message       String?
+  city          String?
+  age           String?
+  preferredDate String?
+  consent       Boolean     @default(false)
+  source        String?
+  formName      String?
+  status        LeadStatus  @default(NEW)
+  telecrmSynced Boolean     @default(false)
+  telecrmId     String?
+  syncedAt      DateTime?
+  error         String?
+  hairLossStage String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("leads")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  SCHEDULED
+  CONVERTED
+  LOST
+}
