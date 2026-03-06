@@ -84,7 +84,7 @@ First Floor, No.187, MS Koil St, above Time emporium, Somu Nagar, Royapuram, Che
                       className="absolute inset-0 h-full w-full"
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
-                      src="https://www.google.com/maps/embed?pb=!1m23!1m12!1m3!1d59098.446190560586!2d80.2783232!3d13.1039232!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m8!3e6!4m0!4m5!1s0x3bae17e74c4d854b%3A0xe7f5ff79b5d90a43!2s1863%2F3%2C3rd%20Floor%2C%20Cresent%20Complex%2C%20Thanisandra%20Main%20Rd%2C%20Bharath%20Nagar%2C%20Manayata%20Tech%20Park%2C%20Sinthan%20Nagar%2C%20Bengaluru%2C%20Karnataka%20560077!3m2!1d13.0488123!2d77.6293872!5e1!3m2!1sen!2sin!4v1766230392024!5m2!1sen!2sin"
+                      src="https://www.google.com/maps/embed?pb=!1m23!1m12!1m3!1d15546.07212338405!2d80.1540219!3d13.06632165!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m8!3e6!4m0!4m5!1s0x3a526f680ad0db8d%3A0x4dcffb1d5d78d0c!2sAdvanced%20GroHair%20%26%20GloSkin%20-%20Royapuram%2C%20First%20Floor%2C%20No.187%2C%20MS%20Koil%20St%2C%20above%20Time%20emporium%2C%20Somu%20Nagar%2C%20Royapuram%2C%20Chennai%2C%20Tamil%20Nadu%20600013!3m2!1d13.113897999999999!2d80.2922894!5e0!3m2!1sen!2sin!4v1772803542739!5m2!1sen!2sin"
                     />
                   </div>
                 </div>
