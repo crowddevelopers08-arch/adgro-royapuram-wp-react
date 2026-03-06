@@ -14,6 +14,14 @@ const CONCERNS = [
   "Alopecia",
 ];
 
+const HAIR_LOSS_STAGES = [
+  { id: "stage1", label: "Stage 1 - Minimal hair loss", image: "/hairloss/stage1.png" },
+  { id: "stage2", label: "Stage 2 - Mild receding", image: "/hairloss/stage2.png" },
+  { id: "stage3", label: "Stage 3 - Moderate thinning", image: "/hairloss/stage3.png" },
+  { id: "stage4", label: "Stage 4 - Significant loss", image: "/hairloss/stage4.png" },
+  { id: "stage5", label: "Stage 5 - Advanced balding", image: "/hairloss/stage5.png" },
+];
+
 export default function NewHairConsultationCardExact({
   bottomImageSrc = "/formimage.png",
   bottomImageAlt = "Certified Trichologists | 10,000+ Happy Patients | Free Consultation",
@@ -24,42 +32,54 @@ export default function NewHairConsultationCardExact({
   const [showPopup, setShowPopup] = useState(false);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [concern, setConcern] = useState(CONCERNS[0]);
-  const [problem, setProblem] = useState("");
   const [pincode, setPincode] = useState("");
+  const [hairLossStage, setHairLossStage] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [popupTimer, setPopupTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Check if popup has been shown in this session
+  // Show popup every 9 seconds
   useEffect(() => {
-    const hasPopupBeenShown = sessionStorage.getItem("popupShown");
-    
-    if (!hasPopupBeenShown) {
-      // Show popup after a small delay (1 second)
-      const timer = setTimeout(() => {
-        setShowPopup(true);
-        sessionStorage.setItem("popupShown", "true");
-      }, 1000);
+    const showPopupEvery9Seconds = () => {
+      // Clear existing timer
+      if (popupTimer) {
+        clearInterval(popupTimer);
+      }
 
-      return () => clearTimeout(timer);
-    }
+      // Show popup immediately on mount
+      setShowPopup(true);
+
+      // Set up interval to show popup every 9 seconds
+      const timer = setInterval(() => {
+        setShowPopup(true);
+      }, 12000);
+
+      setPopupTimer(timer);
+
+      // Cleanup on unmount
+      return () => {
+        if (timer) {
+          clearInterval(timer);
+        }
+      };
+    };
+
+    showPopupEvery9Seconds();
   }, []);
 
   const canSubmit = useMemo(() => {
     const phoneOk = /^\d{10}$/.test(phone);
     const pinOk = /^\d{6}$/.test(pincode);
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     return (
       fullName.trim().length > 1 &&
       phoneOk &&
-      emailOk &&
       concern !== CONCERNS[0] &&
-      problem.trim().length > 2 &&
-      pinOk
+      pinOk &&
+      hairLossStage !== ""
     );
-  }, [fullName, phone, email, concern, problem, pincode]);
+  }, [fullName, phone, concern, pincode, hairLossStage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,13 +95,12 @@ export default function NewHairConsultationCardExact({
         body: JSON.stringify({
           name: fullName,
           mobile: phone,
-          email,
           concern,
           treatment: concern,
-          message: `${problem} | Pincode: ${pincode}`,
+          message: `Pincode: ${pincode} | Hair Loss Stage: ${hairLossStage}`,
           source: "hair-consult-form",
           formName: "hair-consult-form",
-          hairLossStage: "", // not used in this form
+          hairLossStage: hairLossStage,
         }),
       });
 
@@ -97,12 +116,11 @@ export default function NewHairConsultationCardExact({
       // Clear form
       setFullName("");
       setPhone("");
-      setEmail("");
       setConcern(CONCERNS[0]);
-      setProblem("");
       setPincode("");
+      setHairLossStage("");
 
-      // Close popup if open and redirect
+      // Close popup after successful submission and redirect
       setTimeout(() => {
         setShowPopup(false);
         setSuccess(false);
@@ -128,7 +146,7 @@ export default function NewHairConsultationCardExact({
   };
 
   // Main component (always visible)
-  const MainComponent = (
+  const MainComponent = ({ isPopup = false }: { isPopup?: boolean }) => (
     <section
       id="form1"
       className="w-full"
@@ -136,42 +154,55 @@ export default function NewHairConsultationCardExact({
     >
       <div
         className="w-full bg-white rounded-2xl flex flex-col md:flex-row overflow-hidden mobile-card-container"
-        style={{ border: "12px solid #e10b0b" }}
+        style={{ border: "8px solid #e10b0b" }}
       >
-        {/* Left Image Section */}
+        {/* Left Image Section - Reduced width for main component only */}
         <div 
-          className="md:w-2/5 relative min-h-[300px] md:min-h-[600px] bg-gray-100 mobile-image-container"
+          className={`relative bg-gray-100 mobile-image-container ${
+            isPopup 
+              ? 'md:w-[35%] hidden md:block' 
+              : 'md:w-1/3' // Changed from md:w-2/5 to md:w-1/3 for main component
+          }`}
+          style={{ 
+            minHeight: "250px",
+            height: isPopup ? "500px" : "auto",
+            md: { minHeight: isPopup ? "600px" : "550px" }
+          }}
         >
           <Image
             src={leftImageSrc}
             alt={leftImageAlt}
             fill
-            className="object-cover md:object-cover"
+            className="object-cover md:object-contain" // Changed to object-contain for better visibility
             priority
-            sizes="(max-width: 768px) 100vw, 40vw"
+            sizes="(max-width: 768px) 100vw, 33vw"
           />
         </div>
 
-        {/* Form Section */}
-        <div className="md:w-3/5 px-6 pb-6 pt-7 sm:px-7 sm:pb-7 sm:pt-8 max-[470px]:pt-0 mobile-form-padding">
-          <div className="text-center mb-5">
+        {/* Form Section - Adjusted width for main component */}
+        <div className={`${
+            isPopup 
+              ? 'md:w-[65%] w-full' 
+              : 'md:w-2/3' // Changed from md:w-3/5 to md:w-2/3 for main component
+          } px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5 max-[470px]:pt-0 mobile-form-padding`}>
+          <div className="text-center mb-3">
             <h2 
-              className="text-xl sm:text-2xl font-bold mb-2 mobile-title" 
+              className="text-lg sm:text-xl font-bold mb-1 mobile-title" 
               style={{ color: "#3f3f3f" }}
             >
               Book <span style={{ color: "#e10b0b" }}>Hair Consultation</span>
-              <span className="block mt-1 md:inline md:mt-0 md:ml-1">With Trichologist</span>
+              <span className="block mt-0 md:inline md:mt-0 md:ml-1">With Trichologist</span>
             </h2>
           </div>
 
           {success && (
-            <div className="mb-4 p-3 rounded-lg text-sm bg-green-100 text-green-700 border border-green-300">
-              Thank you! Redirecting to thank you page...
+            <div className="mb-3 p-2 rounded-lg text-sm bg-green-100 text-green-700 border border-green-300">
+              Thank you! Redirecting...
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mobile-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mobile-grid">
               <InputStyled placeholder="Full Name" value={fullName} onChange={setFullName} />
 
               <InputStyled
@@ -181,53 +212,73 @@ export default function NewHairConsultationCardExact({
                 inputMode="numeric"
               />
 
-              <InputStyled
-                placeholder="Email Address"
-                value={email}
-                onChange={setEmail}
-                type="email"
-              />
-
               <SelectStyled value={concern} onChange={setConcern} options={CONCERNS} />
 
-              <div className="sm:col-span-2">
-                <InputStyled
-                  placeholder="Hair Problem Description"
-                  value={problem}
-                  onChange={setProblem}
-                />
-              </div>
+              <InputStyled
+                placeholder="6-Digit Pincode"
+                value={pincode}
+                onChange={(v) => setPincode(v.replace(/\D/g, "").slice(0, 6))}
+                inputMode="numeric"
+              />
 
+              {/* Hair Loss Stages Section - Now spans full width */}
               <div className="sm:col-span-2">
-                <InputStyled
-                  placeholder="6-Digit Pincode"
-                  value={pincode}
-                  onChange={(v) => setPincode(v.replace(/\D/g, "").slice(0, 6))}
-                  inputMode="numeric"
-                />
+                <label className="block text-xs font-medium mb-1" style={{ color: "#3f3f3f" }}>
+                  Select Your Hair Loss Stage <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-5 gap-1 sm:gap-2">
+                  {HAIR_LOSS_STAGES.map((stage) => (
+                    <div
+                      key={stage.id}
+                      onClick={() => setHairLossStage(stage.id)}
+                      className={`cursor-pointer rounded border-2 p-1 transition-all ${
+                        hairLossStage === stage.id
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-200 hover:border-red-300"
+                      }`}
+                    >
+                      <div className="relative w-full aspect-square mb-0.5">
+                        <Image
+                          src={stage.image}
+                          alt={stage.label}
+                          fill
+                          className="object-contain p-0.5"
+                          onError={(e) => {
+                            // Fallback if image doesn't exist
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-center font-medium leading-tight" style={{ color: "#3f3f3f" }}>
+                        {stage.label.replace('Stage ', 'S')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <button
                 type="submit"
                 disabled={!canSubmit || loading}
                 className="w-full cursor-pointer transition disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] font-bold shadow-lg mobile-button"
                 style={{
                   background: "#e10b0b",
-                  borderRadius: "12px",
-                  padding: "14px 18px",
-                  fontSize: "16px",
+                  borderRadius: "10px",
+                  padding: "12px 16px",
+                  fontSize: "15px",
                   color: "#ffffff",
-                  boxShadow: "0 5px 15px rgba(225, 11, 11, 0.3)",
+                  boxShadow: "0 4px 10px rgba(225, 11, 11, 0.3)",
                 }}
               >
                 {loading ? "Submitting..." : "Book Your Appointment Now"}
               </button>
             </div>
 
-            <div className="mt-5 pt-4 border-t border-gray-200">
-              <div className="relative mx-auto h-[70px] sm:h-[80px] w-full max-w-[550px] mobile-bottom-image">
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="relative mx-auto h-[50px] sm:h-[60px] w-full max-w-[450px] mobile-bottom-image">
                 <Image
                   src={bottomImageSrc}
                   alt={bottomImageAlt}
@@ -260,7 +311,7 @@ export default function NewHairConsultationCardExact({
           align-items: center;
           justify-content: center;
           z-index: 9999;
-          padding: 16px;
+          padding: 12px;
           animation: fadeIn 0.3s ease-out;
         }
 
@@ -276,23 +327,23 @@ export default function NewHairConsultationCardExact({
         /* Close Button */
         .popup-close {
           position: absolute;
-          top: -15px;
-          right: -15px;
-          width: 35px;
-          height: 35px;
+          top: -12px;
+          right: -12px;
+          width: 30px;
+          height: 30px;
           background: white;
-          border: 3px solid #e10b0b;
+          border: 2px solid #e10b0b;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          font-size: 20px;
+          font-size: 18px;
           font-weight: bold;
           color: #e10b0b;
           transition: all 0.2s ease;
           z-index: 10;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .popup-close:hover {
@@ -304,16 +355,14 @@ export default function NewHairConsultationCardExact({
         /* Mobile-specific styles */
         @media (max-width: 768px) {
           #form1 {
-            padding-top: 10px !important;
-            padding-bottom: 10px !important;
+            padding-top: 5px !important;
+            padding-bottom: 5px !important;
           }
           
           #form1 .mobile-image-container {
-            height: 500px !important;
-            min-height: 500px !important;
-            max-height: 600px !important;
-            position: relative !important;
-            overflow: hidden !important;
+            height: 350px !important;
+            min-height: 350px !important;
+            max-height: 400px !important;
           }
           
           #form1 .mobile-image-container img {
@@ -323,109 +372,143 @@ export default function NewHairConsultationCardExact({
           }
           
           #form1 .mobile-bottom-image {
-            height: 60px !important;
-            margin-top: 8px !important;
+            height: 45px !important;
+            margin-top: 4px !important;
           }
           
           #form1 .mobile-form-padding {
-            padding: 0px 16px 24px 16px !important;
+            padding: 0px 12px 16px 12px !important;
           }
           
           #form1 .mobile-title {
-            font-size: 1.35rem !important;
-            line-height: 1.3 !important;
-            margin-bottom: 20px !important;
+            font-size: 1.2rem !important;
+            line-height: 1.2 !important;
+            margin-bottom: 12px !important;
           }
           
           #form1 .mobile-grid {
-            gap: 12px !important;
+            gap: 8px !important;
           }
           
           #form1 .mobile-button {
-            padding: 16px 18px !important;
-            font-size: 16px !important;
-            border-radius: 14px !important;
+            padding: 12px 14px !important;
+            font-size: 14px !important;
+            border-radius: 10px !important;
           }
 
           #form1 .mobile-card-container {
-            max-height: none !important;
-            height: auto !important;
-            border-width: 8px !important;
+            border-width: 6px !important;
           }
 
           .popup-close {
-            top: -10px;
-            right: -10px;
-            width: 30px;
-            height: 30px;
-            font-size: 18px;
+            top: -8px;
+            right: -8px;
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+          }
+
+          /* MOBILE POPUP FIX */
+          .popup-overlay {
+            padding: 0 !important;
+            align-items: flex-start !important;
+            overflow-y: auto !important;
+          }
+          
+          .popup-overlay > div {
+            margin: 0 !important;
+            max-width: 100% !important;
+          }
+          
+          .popup-overlay .mobile-card-container {
+            border-width: 0 !important;
+            border-radius: 0 !important;
+          }
+          
+          .popup-overlay .mobile-form-padding {
+            padding: 16px 12px 30px 12px !important;
+          }
+          
+          .popup-overlay .popup-close {
+            top: 10px !important;
+            right: 10px !important;
+            width: 35px !important;
+            height: 35px !important;
+            font-size: 22px !important;
+            background: #e10b0b !important;
+            color: white !important;
+            border: none !important;
+            z-index: 100 !important;
+          }
+          
+          /* Hide image in popup on mobile */
+          .popup-overlay .mobile-image-container {
+            display: none !important;
+          }
+
+          /* Stages on mobile - smaller */
+          .popup-overlay .grid-cols-5 {
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 4px !important;
+          }
+          
+          .popup-overlay .text-\\[10px\\] {
+            font-size: 8px !important;
           }
         }
 
         /* Small mobile devices */
         @media (max-width: 480px) {
           #form1 .mobile-image-container {
-            height: 450px !important;
-            min-height: 450px !important;
+            height: 300px !important;
+            min-height: 300px !important;
+          }
+          
+          .grid-cols-5 {
+            gap: 2px !important;
           }
         }
 
-        /* Main container styles - FIXED CENTERING */
+        /* Main container styles */
         .main-container {
           display: flex !important;
           justify-content: center !important;
           align-items: center !important;
           width: 100% !important;
           margin: 0 auto !important;
-          padding: 20px !important;
+          padding: 15px !important;
         }
 
-        /* Card width constraints */
         .main-container #form1 {
-          max-width: 1000px !important;
+          max-width: 1100px !important; /* Slightly increased to accommodate more form space */
           width: 100% !important;
           margin: 0 auto !important;
         }
 
-        /* Large screen styles - increased width */
         @media (min-width: 1400px) {
           .main-container #form1 {
             max-width: 1200px !important;
           }
         }
 
-        @media (min-width: 1600px) {
-          .main-container #form1 {
-            max-width: 1300px !important;
-          }
-        }
-
-        @media (min-width: 1800px) {
-          .main-container #form1 {
-            max-width: 1400px !important;
-          }
-        }
-
-        /* Remove any leftover padding/margin that could cause imbalance */
         body {
           overflow-x: hidden !important;
         }
       `}</style>
 
-      {/* Always visible main component - PERFECTLY CENTERED */}
+      {/* Always visible main component */}
       <div className="main-container">
-        {MainComponent}
+        <MainComponent isPopup={false} />
       </div>
 
-      {/* Popup overlay - only shows when showPopup is true */}
+      {/* Popup overlay */}
       {showPopup && (
         <div className="popup-overlay" onClick={handleOverlayClick}>
-          <div className="relative" style={{ maxWidth: "1000px", width: "100%" }}>
-            {/* Close Button */}
+          <div className="relative" style={{ maxWidth: "1100px", width: "100%" }}>
             <div className="popup-close" onClick={handleClosePopup}>
               ×
             </div>
-            {MainComponent}
+            <MainComponent isPopup={true} />
           </div>
         </div>
       )}
@@ -449,12 +532,12 @@ function InputStyled({ value, onChange, placeholder, type = "text", inputMode }:
       placeholder={placeholder}
       type={type}
       inputMode={inputMode}
-      className="w-full outline-none focus:border-[#e10b0b] focus:ring-2 focus:ring-red-100 transition-colors"
+      className="w-full outline-none focus:border-[#e10b0b] focus:ring-1 focus:ring-red-100 transition-colors"
       style={{
-        borderRadius: "10px",
-        border: "2px solid #d1d5db",
-        padding: "12px 16px",
-        fontSize: "15px",
+        borderRadius: "8px",
+        border: "1.5px solid #d1d5db",
+        padding: "10px 14px",
+        fontSize: "14px",
         color: "#3f3f3f",
         backgroundColor: "#ffffff",
         WebkitAppearance: "none",
@@ -473,12 +556,12 @@ function SelectStyled({ value, onChange, options }: {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none outline-none bg-white focus:border-[#e10b0b] focus:ring-2 focus:ring-red-100 transition-colors"
+        className="w-full appearance-none outline-none bg-white focus:border-[#e10b0b] focus:ring-1 focus:ring-red-100 transition-colors"
         style={{
-          borderRadius: "10px",
-          border: "2px solid #d1d5db",
-          padding: "12px 40px 12px 16px",
-          fontSize: "15px",
+          borderRadius: "8px",
+          border: "1.5px solid #d1d5db",
+          padding: "10px 32px 10px 14px",
+          fontSize: "14px",
           color: value === options[0] ? "#9ca3af" : "#3f3f3f",
           WebkitAppearance: "none",
         }}
@@ -490,7 +573,7 @@ function SelectStyled({ value, onChange, options }: {
         ))}
       </select>
 
-      <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2" style={{ color: "#e10b0b" }}>
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#e10b0b" }}>
         ▼
       </div>
     </div>
