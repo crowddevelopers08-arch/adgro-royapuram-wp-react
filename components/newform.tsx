@@ -15,11 +15,11 @@ const CONCERNS = [
 ];
 
 const HAIR_LOSS_STAGES = [
-  { id: "stage1", label: "Stage 1 - Minimal hair loss", image: "/hairloss/stage1.png" },
-  { id: "stage2", label: "Stage 2 - Mild receding", image: "/hairloss/stage2.png" },
-  { id: "stage3", label: "Stage 3 - Moderate thinning", image: "/hairloss/stage3.png" },
-  { id: "stage4", label: "Stage 4 - Significant loss", image: "/hairloss/stage4.png" },
-  { id: "stage5", label: "Stage 5 - Advanced balding", image: "/hairloss/stage5.png" },
+  { id: "stage1", label: "Stage 1 - Minimal hair loss", image: "/st1.jpeg" },
+  { id: "stage2", label: "Stage 2 - Mild receding", image: "/st2.jpeg" },
+  { id: "stage3", label: "Stage 3 - Moderate thinning", image: "/st3.jpeg" },
+  { id: "stage4", label: "Stage 4 - Significant loss", image: "/st4.jpeg" },
+  { id: "stage5", label: "Stage 5 - Advanced balding", image: "/st5.jpeg" },
 ];
 
 export default function NewHairConsultationCardExact({
