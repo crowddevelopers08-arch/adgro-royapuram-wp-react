@@ -11,13 +11,15 @@ model Lead {
   id            String      @id @default(cuid())
   name          String
   phone         String
-  email         String
-  concern       String?
-  treatment     String?
-  procedure     String?
+  email         String?     
+  concern       String?      // Keep as is
+  treatment     String?      // Add this field
+  procedure     String?      // Add this field
   message       String?
   city          String?
   age           String?
+  pincode       String?
+  pageUrl       String?      
   preferredDate String?
   consent       Boolean     @default(false)
   source        String?
@@ -28,6 +30,7 @@ model Lead {
   syncedAt      DateTime?
   error         String?
   hairLossStage String?
+  notes         String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 

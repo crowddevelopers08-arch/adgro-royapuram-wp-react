@@ -1,47 +1,38 @@
-// /api/leads/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
-
-const MAP = {
-  new: "NEW",
-  contacted: "CONTACTED",
-  scheduled: "SCHEDULED",
-  converted: "CONVERTED",
-  lost: "LOST",
-} as const;
-
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const lead = await db.lead.findById(params.id);
-  if (!lead)
-    return NextResponse.json({ success: false, error: "Lead not found" });
-
-  return NextResponse.json({ success: true, lead });
-}
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const body = await req.json();
+  try {
+    const { id } = params;
+    const body = await req.json();
+    const { status } = body;
 
-  if (body.status && !MAP[body.status])
-    return NextResponse.json({ success: false, error: "Invalid status" });
+    if (!status) {
+      return NextResponse.json(
+        { success: false, error: "Status is required" },
+        { status: 400 }
+      );
+    }
 
-  const lead = await db.lead.update(params.id, {
-    status: body.status ? MAP[body.status] : undefined,
-    notes: body.notes ?? undefined,
-  });
+    const updatedLead = await db.lead.update({
+      where: { id },
+      data: {
+        status: status.toUpperCase(),
+      },
+    });
 
-  return NextResponse.json({ success: true, lead });
-}
-
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  await db.lead.delete(params.id);
-  return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      lead: updatedLead,
+    });
+  } catch (error) {
+    console.error("Error updating lead status:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to update lead status" },
+      { status: 500 }
+    );
+  }
 }

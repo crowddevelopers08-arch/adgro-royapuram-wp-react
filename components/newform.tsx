@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -22,131 +22,140 @@ const HAIR_LOSS_STAGES = [
   { id: "stage5", label: "Stage 5 - Advanced balding", image: "/st5.jpeg" },
 ];
 
-export default function NewHairConsultationCardExact({
-  bottomImageSrc = "/formimage.png",
-  bottomImageAlt = "Certified Trichologists | 10,000+ Happy Patients | Free Consultation",
-  leftImageSrc = "/ilayanilacp.png",
-  leftImageAlt = "Hair Consultation Expert",
-}) {
-  const router = useRouter();
-  const [showPopup, setShowPopup] = useState(false);
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [concern, setConcern] = useState(CONCERNS[0]);
-  const [pincode, setPincode] = useState("");
-  const [hairLossStage, setHairLossStage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [popupTimer, setPopupTimer] = useState<NodeJS.Timeout | null>(null);
+// Move InputStyled outside of the main component
+const InputStyled = React.memo(({ 
+  value, 
+  onChange, 
+  placeholder, 
+  type = "text", 
+  inputMode 
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  type?: string;
+  inputMode?: "text" | "numeric" | "email" | "tel";
+}) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+  }, [onChange]);
 
-  // Show popup every 9 seconds
-  useEffect(() => {
-    const showPopupEvery9Seconds = () => {
-      // Clear existing timer
-      if (popupTimer) {
-        clearInterval(popupTimer);
-      }
+  return (
+    <input
+      value={value}
+      onChange={handleChange}
+      placeholder={placeholder}
+      type={type}
+      inputMode={inputMode}
+      className="w-full outline-none focus:border-[#e10b0b] focus:ring-1 focus:ring-red-100 transition-colors"
+      style={{
+        borderRadius: "8px",
+        border: "1.5px solid #d1d5db",
+        padding: "10px 14px",
+        fontSize: "14px",
+        color: "#3f3f3f",
+        backgroundColor: "#ffffff",
+        WebkitAppearance: "none",
+      }}
+    />
+  );
+});
 
-      // Show popup immediately on mount
-      setShowPopup(true);
+InputStyled.displayName = 'InputStyled';
 
-      // Set up interval to show popup every 9 seconds
-      const timer = setInterval(() => {
-        setShowPopup(true);
-      }, 12000);
+// Move SelectStyled outside of the main component
+const SelectStyled = React.memo(({ 
+  value, 
+  onChange, 
+  options 
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange(e.target.value);
+  }, [onChange]);
 
-      setPopupTimer(timer);
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={handleChange}
+        className="w-full appearance-none outline-none bg-white focus:border-[#e10b0b] focus:ring-1 focus:ring-red-100 transition-colors"
+        style={{
+          borderRadius: "8px",
+          border: "1.5px solid #d1d5db",
+          padding: "10px 32px 10px 14px",
+          fontSize: "14px",
+          color: value === options[0] ? "#9ca3af" : "#3f3f3f",
+          WebkitAppearance: "none",
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
 
-      // Cleanup on unmount
-      return () => {
-        if (timer) {
-          clearInterval(timer);
-        }
-      };
-    };
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#e10b0b" }}>
+        ▼
+      </div>
+    </div>
+  );
+});
 
-    showPopupEvery9Seconds();
-  }, []);
+SelectStyled.displayName = 'SelectStyled';
 
-  const canSubmit = useMemo(() => {
-    const phoneOk = /^\d{10}$/.test(phone);
-    const pinOk = /^\d{6}$/.test(pincode);
-
-    return (
-      fullName.trim().length > 1 &&
-      phoneOk &&
-      concern !== CONCERNS[0] &&
-      pinOk &&
-      hairLossStage !== ""
-    );
-  }, [fullName, phone, concern, pincode, hairLossStage]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canSubmit) return;
-
-    try {
-      setLoading(true);
-      setSuccess(false);
-
-      const res = await fetch("/api/contact-form", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: fullName,
-          mobile: phone,
-          concern,
-          treatment: concern,
-          message: `Pincode: ${pincode} | Hair Loss Stage: ${hairLossStage}`,
-          source: "hair-consult-form",
-          formName: "hair-consult-form",
-          hairLossStage: hairLossStage,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        alert(data.error || "Submission failed. Please try again.");
-        return;
-      }
-
-      setSuccess(true);
-
-      // Clear form
-      setFullName("");
-      setPhone("");
-      setConcern(CONCERNS[0]);
-      setPincode("");
-      setHairLossStage("");
-
-      // Close popup after successful submission and redirect
-      setTimeout(() => {
-        setShowPopup(false);
-        setSuccess(false);
-        router.push("/thank-you");
-      }, 1500);
-
-    } catch (err) {
-      alert("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+// Move MainComponent outside and make it a proper component
+const MainComponent = React.memo(({ 
+  isPopup,
+  formData,
+  onFormDataChange,
+  onSubmit,
+  loading,
+  success
+}: { 
+  isPopup?: boolean;
+  formData: {
+    fullName: string;
+    phone: string;
+    concern: string;
+    pincode: string;
+    hairLossStage: string;
   };
+  onFormDataChange: (field: string, value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  loading: boolean;
+  success: boolean;
+}) => {
+  const bottomImageSrc = "/formimage.png";
+  const bottomImageAlt = "Certified Trichologists | 10,000+ Happy Patients | Free Consultation";
+  const leftImageSrc = "/ilayanilacp.png";
+  const leftImageAlt = "Hair Consultation Expert";
 
-  const handleClosePopup = () => {
-    setShowPopup(false);
-  };
+  const handleFullNameChange = useCallback((value: string) => {
+    onFormDataChange('fullName', value);
+  }, [onFormDataChange]);
 
-  // Handle click outside to close popup
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      handleClosePopup();
-    }
-  };
+  const handlePhoneChange = useCallback((value: string) => {
+    onFormDataChange('phone', value.replace(/\D/g, "").slice(0, 10));
+  }, [onFormDataChange]);
 
-  // Main component (always visible)
-  const MainComponent = ({ isPopup = false }: { isPopup?: boolean }) => (
+  const handleConcernChange = useCallback((value: string) => {
+    onFormDataChange('concern', value);
+  }, [onFormDataChange]);
+
+  const handlePincodeChange = useCallback((value: string) => {
+    onFormDataChange('pincode', value.replace(/\D/g, "").slice(0, 6));
+  }, [onFormDataChange]);
+
+  const handleHairLossStageChange = useCallback((stageId: string) => {
+    onFormDataChange('hairLossStage', stageId);
+  }, [onFormDataChange]);
+
+  return (
     <section
       id="form1"
       className="w-full"
@@ -156,34 +165,33 @@ export default function NewHairConsultationCardExact({
         className="w-full bg-white rounded-2xl flex flex-col md:flex-row overflow-hidden mobile-card-container"
         style={{ border: "8px solid #e10b0b" }}
       >
-        {/* Left Image Section - Reduced width for main component only */}
+        {/* Left Image Section */}
         <div 
           className={`relative bg-gray-100 mobile-image-container ${
             isPopup 
               ? 'md:w-[35%] hidden md:block' 
-              : 'md:w-1/3' // Changed from md:w-2/5 to md:w-1/3 for main component
+              : 'md:w-1/3'
           }`}
           style={{ 
             minHeight: "250px",
             height: isPopup ? "500px" : "auto",
-            md: { minHeight: isPopup ? "600px" : "550px" }
           }}
         >
           <Image
             src={leftImageSrc}
             alt={leftImageAlt}
             fill
-            className="object-cover md:object-contain" // Changed to object-contain for better visibility
+            className="object-cover md:object-contain"
             priority
             sizes="(max-width: 768px) 100vw, 33vw"
           />
         </div>
 
-        {/* Form Section - Adjusted width for main component */}
+        {/* Form Section */}
         <div className={`${
             isPopup 
               ? 'md:w-[65%] w-full' 
-              : 'md:w-2/3' // Changed from md:w-3/5 to md:w-2/3 for main component
+              : 'md:w-2/3'
           } px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5 max-[470px]:pt-0 mobile-form-padding`}>
           <div className="text-center mb-3">
             <h2 
@@ -201,27 +209,35 @@ export default function NewHairConsultationCardExact({
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={onSubmit}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mobile-grid">
-              <InputStyled placeholder="Full Name" value={fullName} onChange={setFullName} />
+              <InputStyled 
+                placeholder="Full Name" 
+                value={formData.fullName} 
+                onChange={handleFullNameChange} 
+              />
 
               <InputStyled
                 placeholder="Phone Number"
-                value={phone}
-                onChange={(v) => setPhone(v.replace(/\D/g, "").slice(0, 10))}
+                value={formData.phone}
+                onChange={handlePhoneChange}
                 inputMode="numeric"
               />
 
-              <SelectStyled value={concern} onChange={setConcern} options={CONCERNS} />
+              <SelectStyled 
+                value={formData.concern} 
+                onChange={handleConcernChange} 
+                options={CONCERNS} 
+              />
 
               <InputStyled
                 placeholder="6-Digit Pincode"
-                value={pincode}
-                onChange={(v) => setPincode(v.replace(/\D/g, "").slice(0, 6))}
+                value={formData.pincode}
+                onChange={handlePincodeChange}
                 inputMode="numeric"
               />
 
-              {/* Hair Loss Stages Section - Now spans full width */}
+              {/* Hair Loss Stages Section */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-medium mb-1" style={{ color: "#3f3f3f" }}>
                   Select Your Hair Loss Stage <span className="text-red-500">*</span>
@@ -230,9 +246,9 @@ export default function NewHairConsultationCardExact({
                   {HAIR_LOSS_STAGES.map((stage) => (
                     <div
                       key={stage.id}
-                      onClick={() => setHairLossStage(stage.id)}
+                      onClick={() => handleHairLossStageChange(stage.id)}
                       className={`cursor-pointer rounded border-2 p-1 transition-all ${
-                        hairLossStage === stage.id
+                        formData.hairLossStage === stage.id
                           ? "border-red-500 bg-red-50"
                           : "border-gray-200 hover:border-red-300"
                       }`}
@@ -244,7 +260,6 @@ export default function NewHairConsultationCardExact({
                           fill
                           className="object-contain p-0.5"
                           onError={(e) => {
-                            // Fallback if image doesn't exist
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                           }}
@@ -262,7 +277,7 @@ export default function NewHairConsultationCardExact({
             <div className="mt-4">
               <button
                 type="submit"
-                disabled={!canSubmit || loading}
+                disabled={loading}
                 className="w-full cursor-pointer transition disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] font-bold shadow-lg mobile-button"
                 style={{
                   background: "#e10b0b",
@@ -293,6 +308,122 @@ export default function NewHairConsultationCardExact({
       </div>
     </section>
   );
+});
+
+MainComponent.displayName = 'MainComponent';
+
+export default function NewHairConsultationCardExact() {
+  const router = useRouter();
+  const [showPopup, setShowPopup] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    concern: CONCERNS[0],
+    pincode: "",
+    hairLossStage: ""
+  });
+
+  const handleFormDataChange = useCallback((field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Show popup every 12 seconds
+  useEffect(() => {
+    // Show popup immediately on mount
+    setShowPopup(true);
+
+    // Set up interval to show popup every 12 seconds
+    const timer = setInterval(() => {
+      setShowPopup(true);
+    }, 12000);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+
+  const canSubmit = useMemo(() => {
+    const phoneOk = /^\d{10}$/.test(formData.phone);
+    const pinOk = /^\d{6}$/.test(formData.pincode);
+
+    return (
+      formData.fullName.trim().length > 1 &&
+      phoneOk &&
+      formData.concern !== CONCERNS[0] &&
+      pinOk &&
+      formData.hairLossStage !== ""
+    );
+  }, [formData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+
+    try {
+      setLoading(true);
+      setSuccess(false);
+
+      const res = await fetch("/api/contact-form", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.fullName,
+          mobile: formData.phone,
+          concern: formData.concern,
+          treatment: formData.concern,
+          message: `Pincode: ${formData.pincode} | Hair Loss Stage: ${formData.hairLossStage}`,
+          source: "Website Leads",
+          formName: "hair-consult-form",
+          hairLossStage: formData.hairLossStage,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        alert(data.error || "Submission failed. Please try again.");
+        return;
+      }
+
+      setSuccess(true);
+
+      // Clear form
+      setFormData({
+        fullName: "",
+        phone: "",
+        concern: CONCERNS[0],
+        pincode: "",
+        hairLossStage: ""
+      });
+
+      // Close popup after successful submission and redirect
+      setTimeout(() => {
+        setShowPopup(false);
+        setSuccess(false);
+        router.push("/thank-you");
+      }, 1500);
+
+    } catch (err) {
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClosePopup = useCallback(() => {
+    setShowPopup(false);
+  }, []);
+
+  const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClosePopup();
+    }
+  }, [handleClosePopup]);
 
   return (
     <>
@@ -480,7 +611,7 @@ export default function NewHairConsultationCardExact({
         }
 
         .main-container #form1 {
-          max-width: 1100px !important; /* Slightly increased to accommodate more form space */
+          max-width: 1100px !important;
           width: 100% !important;
           margin: 0 auto !important;
         }
@@ -498,7 +629,14 @@ export default function NewHairConsultationCardExact({
 
       {/* Always visible main component */}
       <div className="main-container">
-        <MainComponent isPopup={false} />
+        <MainComponent 
+          isPopup={false}
+          formData={formData}
+          onFormDataChange={handleFormDataChange}
+          onSubmit={handleSubmit}
+          loading={loading}
+          success={success}
+        />
       </div>
 
       {/* Popup overlay */}
@@ -508,74 +646,17 @@ export default function NewHairConsultationCardExact({
             <div className="popup-close" onClick={handleClosePopup}>
               ×
             </div>
-            <MainComponent isPopup={true} />
+            <MainComponent 
+              isPopup={true}
+              formData={formData}
+              onFormDataChange={handleFormDataChange}
+              onSubmit={handleSubmit}
+              loading={loading}
+              success={success}
+            />
           </div>
         </div>
       )}
     </>
-  );
-}
-
-/* ---------- UI Helpers ---------- */
-
-function InputStyled({ value, onChange, placeholder, type = "text", inputMode }: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  type?: string;
-  inputMode?: "text" | "numeric" | "email" | "tel";
-}) {
-  return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      type={type}
-      inputMode={inputMode}
-      className="w-full outline-none focus:border-[#e10b0b] focus:ring-1 focus:ring-red-100 transition-colors"
-      style={{
-        borderRadius: "8px",
-        border: "1.5px solid #d1d5db",
-        padding: "10px 14px",
-        fontSize: "14px",
-        color: "#3f3f3f",
-        backgroundColor: "#ffffff",
-        WebkitAppearance: "none",
-      }}
-    />
-  );
-}
-
-function SelectStyled({ value, onChange, options }: {
-  value: string;
-  onChange: (value: string) => void;
-  options: string[];
-}) {
-  return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none outline-none bg-white focus:border-[#e10b0b] focus:ring-1 focus:ring-red-100 transition-colors"
-        style={{
-          borderRadius: "8px",
-          border: "1.5px solid #d1d5db",
-          padding: "10px 32px 10px 14px",
-          fontSize: "14px",
-          color: value === options[0] ? "#9ca3af" : "#3f3f3f",
-          WebkitAppearance: "none",
-        }}
-      >
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-
-      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: "#e10b0b" }}>
-        ▼
-      </div>
-    </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment, useCallback, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -32,8 +32,8 @@ import {
   MoreVertical,
   Eye,
   EyeOff,
-  X,
-  Menu,
+  Globe,
+  AlertCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,8 +46,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 /* ---------- Types ---------- */
 
@@ -57,19 +57,22 @@ interface Lead {
   id: string;
   name: string;
   phone: string;
-  email: string;
+  email?: string | null;
   treatment?: string;
   procedure?: string;
   message?: string;
   city?: string;
   age?: string;
+  pincode?: string;
+  pageUrl?: string;
   consent: boolean;
   source?: string;
   formName?: string;
-  status: string;   // NOTE: comes from DB in UPPERCASE
+  status: string;
   telecrmSynced: boolean;
   telecrmId?: string;
   hairLossStage?: string;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -109,6 +112,8 @@ export default function LeadsTable({
   const [isClient, setIsClient] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<any>(null);
 
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Lead;
@@ -127,28 +132,47 @@ export default function LeadsTable({
 
   /* ---------- Fetch Leads ---------- */
 
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
+      console.log("🔍 Fetching leads from /api/contact-form");
       const res = await fetch("/api/contact-form");
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
       const data = await res.json();
-      setLeads(res.ok && data.success ? data.leads || [] : []);
-    } catch {
+      console.log("📊 API Response:", data);
+      
+      if (data.success && Array.isArray(data.leads)) {
+        setLeads(data.leads);
+        if (data.stats) {
+          setStats(data.stats);
+        }
+        console.log(`✅ Loaded ${data.leads.length} leads`);
+      } else {
+        throw new Error(data.error || "Invalid data format");
+      }
+    } catch (err) {
+      console.error("❌ Fetch error:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch leads");
       setLeads([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [fetchLeads]);
 
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(fetchLeads, refreshInterval);
     return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval]);
+  }, [autoRefresh, refreshInterval, fetchLeads]);
 
   /* ---------- Sorting ---------- */
 
@@ -159,24 +183,26 @@ export default function LeadsTable({
     }));
   };
 
-  const sortedLeads = [...leads].sort((a, b) => {
-    if (!sortConfig) return 0;
+  const sortedLeads = useMemo(() => {
+    return [...leads].sort((a, b) => {
+      if (!sortConfig) return 0;
 
-    let aVal = a[sortConfig.key];
-    let bVal = b[sortConfig.key];
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
 
-    if (sortConfig.key === "createdAt" || sortConfig.key === "updatedAt") {
-      aVal = new Date(aVal as string).getTime();
-      bVal = new Date(bVal as string).getTime();
-    } else {
-      aVal = (aVal ?? "").toString().toLowerCase();
-      bVal = (bVal ?? "").toString().toLowerCase();
-    }
+      if (sortConfig.key === "createdAt" || sortConfig.key === "updatedAt") {
+        aVal = new Date(aVal as string).getTime();
+        bVal = new Date(bVal as string).getTime();
+      } else {
+        aVal = (aVal ?? "").toString().toLowerCase();
+        bVal = (bVal ?? "").toString().toLowerCase();
+      }
 
-    if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [leads, sortConfig]);
 
   /* ---------- Filters ---------- */
 
@@ -199,42 +225,46 @@ export default function LeadsTable({
     return true;
   };
 
-  const filteredLeads = sortedLeads.filter((l) => {
-    const uiStatus = dbToUIStatus(l.status);
+  const filteredLeads = useMemo(() => {
+    return sortedLeads.filter((l) => {
+      const uiStatus = dbToUIStatus(l.status);
 
-    const matchesSearch =
-      safe(l.name).includes(safe(searchTerm)) ||
-      safe(l.phone).includes(safe(searchTerm)) ||
-      safe(l.email).includes(safe(searchTerm)) ||
-      safe(l.treatment).includes(safe(searchTerm)) ||
-      safe(l.message).includes(safe(searchTerm)) ||
-      safe(l.city).includes(safe(searchTerm)) ||
-      safe(l.formName).includes(safe(searchTerm)) ||
-      safe(l.hairLossStage).includes(safe(searchTerm));
+      const matchesSearch =
+        safe(l.name).includes(safe(searchTerm)) ||
+        safe(l.phone).includes(safe(searchTerm)) ||
+        (l.email && safe(l.email).includes(safe(searchTerm))) ||
+        safe(l.treatment).includes(safe(searchTerm)) ||
+        safe(l.message).includes(safe(searchTerm)) ||
+        safe(l.city).includes(safe(searchTerm)) ||
+        safe(l.formName).includes(safe(searchTerm)) ||
+        safe(l.hairLossStage).includes(safe(searchTerm)) ||
+        safe(l.pincode).includes(safe(searchTerm)) ||
+        (l.pageUrl && safe(l.pageUrl).includes(safe(searchTerm)));
 
-    const matchesStatus =
-      statusFilter === "all" || uiStatus === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || uiStatus === statusFilter;
 
-    const matchesTreatment =
-      treatmentFilter === "all" || l.treatment === treatmentFilter;
+      const matchesTreatment =
+        treatmentFilter === "all" || l.treatment === treatmentFilter;
 
-    const matchesDate =
-      dateFilter === "all" || isWithinDateRange(l.createdAt, dateFilter);
+      const matchesDate =
+        dateFilter === "all" || isWithinDateRange(l.createdAt, dateFilter);
 
-    const matchesForm = formFilter === "all" || l.formName === formFilter;
+      const matchesForm = formFilter === "all" || l.formName === formFilter;
 
-    return (
-      matchesSearch &&
-      matchesStatus &&
-      matchesTreatment &&
-      matchesDate &&
-      matchesForm
-    );
-  });
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesTreatment &&
+        matchesDate &&
+        matchesForm
+      );
+    });
+  }, [sortedLeads, searchTerm, statusFilter, treatmentFilter, dateFilter, formFilter]);
 
   /* ---------- UI Helpers ---------- */
 
-  const getStatusBadge = (status: UIStatus) => {
+  const getStatusBadge = useCallback((status: UIStatus) => {
     const map = {
       new: "bg-blue-100 text-blue-800 border-blue-200",
       contacted: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -248,9 +278,9 @@ export default function LeadsTable({
         {isMobile ? status.charAt(0).toUpperCase() : status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
     );
-  };
+  }, [isMobile]);
 
-  const getFormBadge = (name?: string) => {
+  const getFormBadge = useCallback((name?: string) => {
     if (!name)
       return (
         <Badge className="bg-gray-100 text-gray-700 border-gray-200 text-xs">
@@ -270,8 +300,13 @@ export default function LeadsTable({
         shortLabel: "Common",
         color: "bg-emerald-100 text-emerald-800 border-emerald-200",
       },
-      hairtreatment: {
-        label: "Hair Treatment",
+      "hair-consult-form": {
+        label: "Hair Consultation",
+        shortLabel: "Hair",
+        color: "bg-purple-100 text-purple-800 border-purple-200",
+      },
+      "hair consultation form": {
+        label: "Hair Consultation",
         shortLabel: "Hair",
         color: "bg-purple-100 text-purple-800 border-purple-200",
       },
@@ -293,9 +328,9 @@ export default function LeadsTable({
         {isMobile ? cfg.shortLabel : cfg.label}
       </Badge>
     );
-  };
+  }, [isMobile]);
 
-  const getTelecrmBadge = (v: boolean) =>
+  const getTelecrmBadge = useCallback((v: boolean) =>
     v ? (
       <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
         {isMobile ? "✓" : "Synced"}
@@ -304,7 +339,7 @@ export default function LeadsTable({
       <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 text-xs">
         {isMobile ? "⏳" : "Pending"}
       </Badge>
-    );
+    ), [isMobile]);
 
   const updateLeadStatus = async (id: string, status: UIStatus) => {
     try {
@@ -322,12 +357,12 @@ export default function LeadsTable({
           )
         );
       }
-    } catch {
-      /* no-op */
+    } catch (error) {
+      console.error("Status update error:", error);
     }
   };
 
-  const formatDate = (d: string) => {
+  const formatDate = useCallback((d: string) => {
     if (!isClient || !d) return { date: "", time: "" };
     const dt = new Date(d);
     
@@ -345,17 +380,17 @@ export default function LeadsTable({
         minute: "2-digit",
       }),
     };
-  };
+  }, [isClient, isMobile]);
 
   const toggleLeadExpansion = (id: string) =>
     setExpandedLead((c) => (c === id ? null : id));
 
   /* ---------- CSV Export ---------- */
 
-  const exportToCSV = () => {
+  const exportToCSV = useCallback(() => {
     const headers = [
       "Name","Phone","Email","Treatment","Hair Loss Stage","Message",
-      "City","Age","Status","Form Name","Source","TeleCRM Synced","Created At",
+      "City","Age","Pincode","Page URL","Status","Form Name","Source","TeleCRM Synced","Created At",
     ];
 
     const rows = filteredLeads.map((l) => [
@@ -367,6 +402,8 @@ export default function LeadsTable({
       `"${(l.message ?? "").replace(/"/g, '""')}"`,
       l.city ?? "",
       l.age ?? "",
+      l.pincode ?? "",
+      l.pageUrl ?? "",
       dbToUIStatus(l.status),
       l.formName ?? "",
       l.source ?? "",
@@ -382,19 +419,25 @@ export default function LeadsTable({
     a.download = `leads-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }, [filteredLeads, isClient]);
 
   const handleCall = (p?: string) => p && window.open(`tel:${p}`, "_self");
-  const handleEmail = (e?: string) =>
+  const handleEmail = (e?: string | null) =>
     e && window.open(`mailto:${e}`, "_self");
+  
+  const handleOpenUrl = (url?: string) => {
+    if (url) {
+      window.open(url, "_blank");
+    }
+  };
 
-  const uniqueFormNames = Array.from(
-    new Set(leads.map((l) => l.formName).filter(Boolean))
-  );
+  const uniqueFormNames = useMemo(() => 
+    Array.from(new Set(leads.map((l) => l.formName).filter(Boolean))),
+  [leads]);
 
   /* ---------- Mobile Filters Sheet ---------- */
 
-  const MobileFiltersSheet = () => (
+  const MobileFiltersSheet = useCallback(() => (
     <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl">
         <SheetHeader className="mb-6">
@@ -402,7 +445,6 @@ export default function LeadsTable({
         </SheetHeader>
         
         <div className="space-y-6">
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
             <Input
@@ -413,7 +455,6 @@ export default function LeadsTable({
             />
           </div>
 
-          {/* Status Filter */}
           <div>
             <label className="text-sm font-medium mb-2 block">Status</label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -432,7 +473,6 @@ export default function LeadsTable({
             </Select>
           </div>
 
-          {/* Treatment Filter */}
           <div>
             <label className="text-sm font-medium mb-2 block">Treatment</label>
             <Select value={treatmentFilter} onValueChange={setTreatmentFilter}>
@@ -441,15 +481,17 @@ export default function LeadsTable({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Treatments</SelectItem>
-                <SelectItem value="Baldness">Baldness</SelectItem>
-                <SelectItem value="Hair thinning">Hair thinning</SelectItem>
-                <SelectItem value="Receding hairline">Receding hairline</SelectItem>
+                <SelectItem value="Hair Fall">Hair Fall</SelectItem>
+                <SelectItem value="Dandruff">Dandruff</SelectItem>
+                <SelectItem value="Thin Hair">Thin Hair</SelectItem>
+                <SelectItem value="Bald Patches">Bald Patches</SelectItem>
+                <SelectItem value="Receding Hairline">Receding Hairline</SelectItem>
+                <SelectItem value="Alopecia">Alopecia</SelectItem>
                 <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Form Filter */}
           <div>
             <label className="text-sm font-medium mb-2 block">Form</label>
             <Select value={formFilter} onValueChange={setFormFilter}>
@@ -468,7 +510,6 @@ export default function LeadsTable({
             </Select>
           </div>
 
-          {/* Date Filter */}
           <div>
             <label className="text-sm font-medium mb-2 block">Date</label>
             <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -485,7 +526,6 @@ export default function LeadsTable({
             </Select>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t">
             <Button
               variant="outline"
@@ -510,11 +550,11 @@ export default function LeadsTable({
         </div>
       </SheetContent>
     </Sheet>
-  );
+  ), [showMobileFilters, searchTerm, statusFilter, treatmentFilter, formFilter, dateFilter, uniqueFormNames]);
 
   /* ---------- Mobile Lead Card ---------- */
 
-  const MobileLeadCard = ({ lead }: { lead: Lead }) => {
+  const MobileLeadCard = useCallback(({ lead }: { lead: Lead }) => {
     const uiStatus = dbToUIStatus(lead.status);
     const date = formatDate(lead.createdAt);
     const isExpanded = expandedLead === lead.id;
@@ -523,7 +563,6 @@ export default function LeadsTable({
       <Card className="mb-3 overflow-hidden">
         <CardContent className="p-4">
           <div className="space-y-3">
-            {/* Header Row */}
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <h3 className="font-semibold text-base truncate">
@@ -546,7 +585,6 @@ export default function LeadsTable({
               </div>
             </div>
 
-            {/* Details Row */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <p className="text-xs text-gray-500">Treatment</p>
@@ -560,14 +598,30 @@ export default function LeadsTable({
               </div>
             </div>
 
-            {/* Sync Status */}
+            {lead.pincode && (
+              <div>
+                <p className="text-xs text-gray-500">Pincode</p>
+                <p className="text-sm font-medium">{lead.pincode}</p>
+              </div>
+            )}
+
+            {lead.pageUrl && (
+              <div>
+                <p className="text-xs text-gray-500">Page URL</p>
+                <p className="text-sm font-medium truncate" title={lead.pageUrl}>
+                  {lead.pageUrl.length > 30 
+                    ? lead.pageUrl.substring(0, 30) + "..." 
+                    : lead.pageUrl}
+                </p>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Sync Status</p>
                 <div className="mt-1">{getTelecrmBadge(lead.telecrmSynced)}</div>
               </div>
               
-              {/* Action Buttons */}
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
@@ -578,6 +632,7 @@ export default function LeadsTable({
                   }}
                   disabled={!lead.phone}
                   className="h-8 w-8 p-0"
+                  title="Call"
                 >
                   <Phone className="h-4 w-4" />
                 </Button>
@@ -590,9 +645,24 @@ export default function LeadsTable({
                   }}
                   disabled={!lead.email}
                   className="h-8 w-8 p-0"
+                  title="Email"
                 >
                   <Mail className="h-4 w-4" />
                 </Button>
+                {lead.pageUrl && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenUrl(lead.pageUrl);
+                    }}
+                    className="h-8 w-8 p-0"
+                    title="Open Page URL"
+                  >
+                    <Globe className="h-4 w-4" />
+                  </Button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -639,7 +709,6 @@ export default function LeadsTable({
               </div>
             </div>
 
-            {/* Expandable Details */}
             {isExpanded && (
               <div className="pt-3 border-t mt-3 space-y-3">
                 <div>
@@ -649,6 +718,32 @@ export default function LeadsTable({
                       <span className="text-gray-500">Source:</span>{" "}
                       <span>{lead.source || "-"}</span>
                     </div>
+                    {lead.pincode && (
+                      <div>
+                        <span className="text-gray-500">Pincode:</span>{" "}
+                        <span>{lead.pincode}</span>
+                      </div>
+                    )}
+                    {lead.hairLossStage && (
+                      <div>
+                        <span className="text-gray-500">Hair Loss Stage:</span>{" "}
+                        <span>{lead.hairLossStage}</span>
+                      </div>
+                    )}
+                    {lead.pageUrl && (
+                      <div>
+                        <span className="text-gray-500">Page URL:</span>{" "}
+                        <a 
+                          href={lead.pageUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline truncate block"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {lead.pageUrl}
+                        </a>
+                      </div>
+                    )}
                     {lead.telecrmId && (
                       <div>
                         <span className="text-gray-500">TeleCRM ID:</span>{" "}
@@ -672,13 +767,47 @@ export default function LeadsTable({
         </CardContent>
       </Card>
     );
-  };
+  }, [expandedLead, formatDate, getStatusBadge, getFormBadge, getTelecrmBadge, updateLeadStatus, toggleLeadExpansion]);
 
-  /* ---------- UI ---------- */
+  /* ---------- Stats Cards ---------- */
+
+  const StatsCards = useCallback(() => {
+    if (!stats) return null;
+
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-gray-500">Total Leads</p>
+            <p className="text-2xl font-bold">{stats.total || leads.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-gray-500">Today</p>
+            <p className="text-2xl font-bold">{stats.today || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-gray-500">This Week</p>
+            <p className="text-2xl font-bold">{stats.week || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-gray-500">This Month</p>
+            <p className="text-2xl font-bold">{stats.month || 0}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }, [stats, leads.length]);
+
+  /* ---------- Main Render ---------- */
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
-      {/* Mobile Filters Sheet */}
       <MobileFiltersSheet />
 
       <Card>
@@ -695,7 +824,6 @@ export default function LeadsTable({
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2">
-                {/* Mobile Filter Button */}
                 {isMobile && (
                   <Button
                     variant="outline"
@@ -724,6 +852,7 @@ export default function LeadsTable({
                   onClick={exportToCSV}
                   size="sm"
                   className="w-full sm:w-auto"
+                  disabled={filteredLeads.length === 0}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
@@ -731,13 +860,14 @@ export default function LeadsTable({
               </div>
             </div>
 
-            {/* Desktop Filters */}
+            <StatsCards />
+
             {!isMobile && (
               <div className="grid grid-cols-1 md:grid-cols-6 gap-3 p-4 bg-gray-50 rounded-lg border">
                 <div className="md:col-span-2 relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                   <Input
-                    placeholder="Search name, phone, email, stage..."
+                    placeholder="Search name, phone, pincode, stage, url..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -765,9 +895,12 @@ export default function LeadsTable({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Treatments</SelectItem>
-                    <SelectItem value="Baldness">Baldness</SelectItem>
-                    <SelectItem value="Hair thinning">Hair thinning</SelectItem>
-                    <SelectItem value="Receding hairline">Receding hairline</SelectItem>
+                    <SelectItem value="Hair Fall">Hair Fall</SelectItem>
+                    <SelectItem value="Dandruff">Dandruff</SelectItem>
+                    <SelectItem value="Thin Hair">Thin Hair</SelectItem>
+                    <SelectItem value="Bald Patches">Bald Patches</SelectItem>
+                    <SelectItem value="Receding Hairline">Receding Hairline</SelectItem>
+                    <SelectItem value="Alopecia">Alopecia</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -805,7 +938,6 @@ export default function LeadsTable({
         </CardHeader>
 
         <CardContent>
-          {/* Results Count */}
           <div className="mb-4 flex justify-between items-center">
             <p className="text-sm text-gray-600">
               Showing {filteredLeads.length} of {leads.length} leads
@@ -828,44 +960,47 @@ export default function LeadsTable({
             )}
           </div>
 
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           {loading ? (
             <div className="py-12 text-center">
-              <RefreshCw className="h-6 w-6 mr-2 inline animate-spin" />
-              <span className="text-gray-600">Loading leads...</span>
+              <RefreshCw className="h-6 w-6 mx-auto animate-spin text-gray-400" />
+              <p className="mt-2 text-gray-600">Loading leads...</p>
             </div>
           ) : filteredLeads.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-gray-600">No leads found</p>
               <p className="text-sm text-gray-500 mt-2">
-                Try adjusting your filters
+                {leads.length === 0 
+                  ? "No leads in the database yet. Submit a form to create your first lead!" 
+                  : "Try adjusting your filters"}
               </p>
             </div>
           ) : isMobile ? (
-            /* Mobile Card View */
             <div className="space-y-2">
               {filteredLeads.map((lead) => (
                 <MobileLeadCard key={lead.id} lead={lead} />
               ))}
             </div>
           ) : (
-            /* Desktop Table View */
             <div className="border rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b">
                     <tr>
-                      <th
-                        className="px-4 py-3 cursor-pointer whitespace-nowrap text-left"
-                        onClick={() => handleSort("name")}
-                      >
+                      <th className="px-4 py-3 cursor-pointer whitespace-nowrap text-left" onClick={() => handleSort("name")}>
                         <div className="flex items-center gap-1">
                           Name
-                          {sortConfig?.key === "name" &&
-                            (sortConfig.direction === "asc" ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
+                          {sortConfig?.key === "name" && (
+                            sortConfig.direction === "asc" ? 
+                              <ChevronUp className="h-4 w-4" /> : 
                               <ChevronDown className="h-4 w-4" />
-                            ))}
+                          )}
                         </div>
                       </th>
                       <th className="px-4 py-3 whitespace-nowrap text-left">Contact</th>
@@ -873,18 +1008,14 @@ export default function LeadsTable({
                       <th className="px-4 py-3 whitespace-nowrap text-left">Form</th>
                       <th className="px-4 py-3 whitespace-nowrap text-left">Status</th>
                       <th className="px-4 py-3 whitespace-nowrap text-left">Sync</th>
-                      <th
-                        className="px-4 py-3 cursor-pointer whitespace-nowrap text-left"
-                        onClick={() => handleSort("createdAt")}
-                      >
+                      <th className="px-4 py-3 cursor-pointer whitespace-nowrap text-left" onClick={() => handleSort("createdAt")}>
                         <div className="flex items-center gap-1">
                           Date
-                          {sortConfig?.key === "createdAt" &&
-                            (sortConfig.direction === "asc" ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
+                          {sortConfig?.key === "createdAt" && (
+                            sortConfig.direction === "asc" ? 
+                              <ChevronUp className="h-4 w-4" /> : 
                               <ChevronDown className="h-4 w-4" />
-                            ))}
+                          )}
                         </div>
                       </th>
                       <th className="px-4 py-3 whitespace-nowrap text-left">Actions</th>
@@ -915,6 +1046,11 @@ export default function LeadsTable({
                                     {lead.email}
                                   </span>
                                 )}
+                                {lead.pincode && (
+                                  <span className="text-xs text-gray-500">
+                                    Pin: {lead.pincode}
+                                  </span>
+                                )}
                               </div>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -931,22 +1067,17 @@ export default function LeadsTable({
                                   </div>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                  {["new", "contacted", "scheduled", "converted", "lost"].map(
-                                    (s) => (
-                                      <DropdownMenuItem
-                                        key={s}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          updateLeadStatus(
-                                            lead.id,
-                                            s as UIStatus
-                                          );
-                                        }}
-                                      >
-                                        Set as {s}
-                                      </DropdownMenuItem>
-                                    )
-                                  )}
+                                  {["new", "contacted", "scheduled", "converted", "lost"].map((s) => (
+                                    <DropdownMenuItem
+                                      key={s}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        updateLeadStatus(lead.id, s as UIStatus);
+                                      }}
+                                    >
+                                      Set as {s}
+                                    </DropdownMenuItem>
+                                  ))}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </td>
@@ -970,6 +1101,7 @@ export default function LeadsTable({
                                     handleCall(lead.phone);
                                   }}
                                   disabled={!lead.phone}
+                                  title="Call"
                                 >
                                   <Phone className="h-3 w-3" />
                                 </Button>
@@ -981,9 +1113,23 @@ export default function LeadsTable({
                                     handleEmail(lead.email);
                                   }}
                                   disabled={!lead.email}
+                                  title="Email"
                                 >
                                   <Mail className="h-3 w-3" />
                                 </Button>
+                                {lead.pageUrl && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenUrl(lead.pageUrl);
+                                    }}
+                                    title="Open Page URL"
+                                  >
+                                    <Globe className="h-3 w-3" />
+                                  </Button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -1000,6 +1146,30 @@ export default function LeadsTable({
                                       <div>
                                         <b>Source:</b> {lead.source || "-"}
                                       </div>
+                                      {lead.pincode && (
+                                        <div>
+                                          <b>Pincode:</b> {lead.pincode}
+                                        </div>
+                                      )}
+                                      {lead.hairLossStage && (
+                                        <div>
+                                          <b>Hair Loss Stage:</b> {lead.hairLossStage}
+                                        </div>
+                                      )}
+                                      {lead.pageUrl && (
+                                        <div>
+                                          <b>Page URL:</b>{" "}
+                                          <a 
+                                            href={lead.pageUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:underline break-all"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            {lead.pageUrl}
+                                          </a>
+                                        </div>
+                                      )}
                                       {lead.telecrmId && (
                                         <div>
                                           <b>TeleCRM ID:</b> {lead.telecrmId}
@@ -1028,15 +1198,6 @@ export default function LeadsTable({
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
-
-          {/* Mobile Pagination Info */}
-          {isMobile && filteredLeads.length > 0 && (
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-center text-sm text-gray-600">
-                Showing {filteredLeads.length} leads
-              </p>
             </div>
           )}
         </CardContent>
