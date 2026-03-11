@@ -9,7 +9,7 @@ type Props = {
 };
 
 export default function ThankTopBar({
-  logoSrc = "/adgrojpg.jpg",
+  logoSrc = "/royalogo.jpg",
   phone = "+91 7436856789",
 }: Props) {
   const telHref = `tel:${phone.replace(/\s+/g, "")}`;
