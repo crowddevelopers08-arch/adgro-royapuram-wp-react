@@ -59,7 +59,7 @@ const mobileImages = [
 
 const ImageCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined);
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -98,6 +98,15 @@ const ImageCarousel = () => {
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
   };
+
+  // Don't render until screen size is known to prevent flash of wrong banner
+  if (isMobile === undefined) {
+    return (
+      <div className="py-10 max-[470px]:py-6 bg-[#3f3f3f]">
+        <div className="relative w-full max-w-7xl mx-auto h-[450px] sm:h-[350px] md:h-[450px] rounded-xl bg-[#4a4a4a]" />
+      </div>
+    );
+  }
 
   // Get current images based on screen size
   const currentImages = isMobile ? mobileImages : desktopImages;
