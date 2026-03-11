@@ -7,7 +7,7 @@ type Props = {
   logoSrc?: string; // optional: pass your logo path (e.g. "/images/grohair-logo.png")
 };
 
-export default function ContactFooterReplica({ logoSrc = "/adgrojpg.jpg" }: Props) {
+export default function ContactFooterReplica({ logoSrc = "/royalogo.jpg" }: Props) {
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   return (
