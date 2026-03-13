@@ -5,54 +5,54 @@ import Image from "next/image";
 
 const desktopImages = [
   {
-    src: "/Creative-10-3.jpg",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-10-3.jpg",
     alt: "Desktop Image 1"
   },
   {
-    src: "/Creative-92-new.jpg",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-92-new.jpg",
     alt: "Desktop Image 2"
   },
   {
-    src: "/Creative-91-3.jpg",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-91-3.jpg",
     alt: "Desktop Image 3"
   },
   {
-    src: "/Creative-10-3.jpg",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-10-3.jpg",
     alt: "Desktop Image 1"
   },
   {
-    src: "/Creative-92-new.jpg",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-92-new.jpg",
     alt: "Desktop Image 2"
   },
   {
-    src: "/Creative-91-3.jpg",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-91-3.jpg",
     alt: "Desktop Image 3"
   },
 ];
 
 const mobileImages = [
   {
-    src: "/Creative-81.webp",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-81.webp",
     alt: "Mobile Image 1"
   },
   {
-    src: "/Creative-82.webp",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-82.webp",
     alt: "Mobile Image 2"
   },
   {
-    src: "/Creative-83.webp",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-83.webp",
     alt: "Mobile Image 3"
   },
  {
-    src: "/Creative-81.webp",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-81.webp",
     alt: "Mobile Image 1"
   },
   {
-    src: "/Creative-82.webp",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-82.webp",
     alt: "Mobile Image 2"
   },
  {
-    src: "/Creative-83.webp",
+    src: "https://ik.imagekit.io/5xfdb3p6jv/public/public/Creative-83.webp",
     alt: "Mobile Image 3"
   },
 ];

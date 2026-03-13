@@ -102,8 +102,8 @@ export default function VideoTestimonials() {
 
   const videoTestimonials = [
     { type: "wistia", mediaId: "ht45c1ylu0", aspect: "0.5625" },
-    { type: "mp4", videoUrl: "video1.mp4" },
-    { type: "mp4", videoUrl: "video2.mp4" },
+    { type: "mp4", videoUrl: "https://ik.imagekit.io/5xfdb3p6jv/public/public/video1.mp4" },
+    { type: "mp4", videoUrl: "https://ik.imagekit.io/5xfdb3p6jv/public/public/video2.mp4" },
   ];
 
   // Initialize video states

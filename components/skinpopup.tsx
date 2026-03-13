@@ -15,9 +15,9 @@ const CONCERNS = [
 ];
 
 export default function HairConsultationCardExact({
-  bottomImageSrc = "/formimage.png",
+  bottomImageSrc = "https://ik.imagekit.io/5xfdb3p6jv/public/public/formimage.png",
   bottomImageAlt = "Certified Trichologists | 10,000+ Happy Patients | Free Consultation",
-  leftImageSrc = "/ilayanila.png",
+  leftImageSrc = "https://ik.imagekit.io/5xfdb3p6jv/public/public/ilayanila.png",
   leftImageAlt = "Hair Consultation Expert",
   autoShowDelay = 2000, // Show after 2 seconds by default
   showOnLoad = true,

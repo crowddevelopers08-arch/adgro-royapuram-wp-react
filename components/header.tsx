@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function GrohairTopBar({
-  logoSrc = "/royalogo.jpg",
+  logoSrc = "https://ik.imagekit.io/5xfdb3p6jv/public/public/royalogo.jpg",
   phone = "+91 7436856789",
   announcementBarId = "red-top-announcement",
   bookNowUrl = "/book-appointment", // default booking URL

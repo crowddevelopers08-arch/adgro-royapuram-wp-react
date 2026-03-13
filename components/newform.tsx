@@ -15,11 +15,11 @@ const CONCERNS = [
 ];
 
 const HAIR_LOSS_STAGES = [
-  { id: "stage1", label: "Stage 1 - Minimal hair loss", image: "/st1.jpeg" },
-  { id: "stage2", label: "Stage 2 - Mild receding", image: "/st2.jpeg" },
-  { id: "stage3", label: "Stage 3 - Moderate thinning", image: "/st3.jpeg" },
-  { id: "stage4", label: "Stage 4 - Significant loss", image: "/st4.jpeg" },
-  { id: "stage5", label: "Stage 5 - Advanced balding", image: "/st5.jpeg" },
+  { id: "stage1", label: "Stage 1 - Minimal hair loss", image: "https://ik.imagekit.io/5xfdb3p6jv/public/public/st1.jpeg" },
+  { id: "stage2", label: "Stage 2 - Mild receding", image: "https://ik.imagekit.io/5xfdb3p6jv/public/public/st2.jpeg" },
+  { id: "stage3", label: "Stage 3 - Moderate thinning", image: "https://ik.imagekit.io/5xfdb3p6jv/public/public/st3.jpeg" },
+  { id: "stage4", label: "Stage 4 - Significant loss", image: "https://ik.imagekit.io/5xfdb3p6jv/public/public/st4.jpeg" },
+  { id: "stage5", label: "Stage 5 - Advanced balding", image: "https://ik.imagekit.io/5xfdb3p6jv/public/public/st5.jpeg" },
 ];
 
 // Move InputStyled outside of the main component
@@ -130,9 +130,9 @@ const MainComponent = React.memo(({
   loading: boolean;
   success: boolean;
 }) => {
-  const bottomImageSrc = "/formimage.png";
+  const bottomImageSrc = "https://ik.imagekit.io/5xfdb3p6jv/public/public/formimage.png";
   const bottomImageAlt = "Certified Trichologists | 10,000+ Happy Patients | Free Consultation";
-  const leftImageSrc = "/ilayanilacp.png";
+  const leftImageSrc = "https://ik.imagekit.io/5xfdb3p6jv/public/public/ilayanilacp.png";
   const leftImageAlt = "Hair Consultation Expert";
 
   const handleFullNameChange = useCallback((value: string) => {

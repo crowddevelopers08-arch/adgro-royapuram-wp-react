@@ -15,32 +15,32 @@ export default function HairTreatmentsGrid() {
       {
         title: "Hair Transplant",
         desc: "Dealing with hair loss or thinning? Our expert hair transplant solutions provide natural, permanent restoration for a fuller, thicker look.",
-        img: "/treatment1.jpg",
+        img: "https://ik.imagekit.io/5xfdb3p6jv/public/public/treatment1.jpg",
       },
       {
         title: "Baldness Treatment",
         desc: "Regain lost hair and rebuild confidence with expert-backed restoration solutions that work. Whether it's partial or complete baldness, we've got a treatment for you.",
-        img: "/treatment2.jpg",
+        img: "https://ik.imagekit.io/5xfdb3p6jv/public/public/treatment2.jpg",
       },
       {
         title: "Hair Thinning Treatment",
         desc: "Thicker, fuller hair is possible! Our specialized therapies strengthen your hair from the roots, reducing thinning and improving volume.",
-        img: "/treatment3.jpg",
+        img: "https://ik.imagekit.io/5xfdb3p6jv/public/public/treatment3.jpg",
       },
       {
         title: "Alopecia & Patchy Hair Loss",
         desc: "Tired of dealing with sudden bald patches? Our advanced treatments target alopecia, reactivating dormant follicles for visible regrowth.",
-        img: "/treatment4.jpg",
+        img: "https://ik.imagekit.io/5xfdb3p6jv/public/public/treatment4.jpg",
       },
       {
         title: "Receding Hairline Solutions",
         desc: "Stop your hairline from moving backward! Our customized approach helps strengthen existing hair and stimulate new growth for a more youthful look.",
-        img: "/treatment5.jpg",
+        img: "https://ik.imagekit.io/5xfdb3p6jv/public/public/treatment5.jpg",
       },
       {
         title: "Genetic Hair Loss Treatment",
         desc: "Inherited hair loss doesn't have to define your look. Our personalized treatments tackle hereditary patterns, giving you the best chance at long-term regrowth.",
-        img: "/treatment6.jpg",
+        img: "https://ik.imagekit.io/5xfdb3p6jv/public/public/treatment6.jpg",
       },
     ],
     []
