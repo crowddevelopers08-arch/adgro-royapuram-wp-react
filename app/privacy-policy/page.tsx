@@ -22,7 +22,7 @@ export default function SimplePrivacyPolicyPage() {
         <div className="space-y-8">
           {/* Section 1 */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Informations We Collect</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Information We Collect</h2>
             <div className="ml-4 space-y-4">
               <div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">1.1 Personal Information</h3>
