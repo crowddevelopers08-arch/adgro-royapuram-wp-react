@@ -6,14 +6,14 @@ import Image from "next/image";
 
 type Props = {
   logoSrc?: string; // put your logo in /public and pass like "/grohair-logo.png"
-  phone?: string;   // "+91 7436856789"
+  phone?: string;   // "+91 7358034097"
   announcementBarId?: string; // ID of the announcement bar to track
   bookNowUrl?: string; // URL for booking appointment
 };
 
 export default function GrohairTopBar({
   logoSrc = "https://ik.imagekit.io/5xfdb3p6jv/public/public/royalogo.jpg",
-  phone = "+91 7436856789",
+  phone = "+91 7358034097",
   announcementBarId = "red-top-announcement",
   bookNowUrl = "/book-appointment", // default booking URL
 }: Props) {

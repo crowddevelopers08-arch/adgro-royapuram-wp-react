@@ -13,7 +13,7 @@ export function Navbar() {
     // Track conversion when phone number is clicked
     if (typeof gtag_report_conversion !== 'undefined') {
       e.preventDefault()
-      gtag_report_conversion('tel:+917436856789')
+      gtag_report_conversion('tel:+917358034097')
     }
   }
 
@@ -21,7 +21,7 @@ export function Navbar() {
     // Track conversion when phone number is clicked on mobile
     if (typeof gtag_report_conversion !== 'undefined') {
       e.preventDefault()
-      gtag_report_conversion('tel:+917436856789')
+      gtag_report_conversion('tel:+917358034097')
     }
   }
 
@@ -76,7 +76,7 @@ export function Navbar() {
               className="border-[#d90f12] text-[#d90f12] hover:bg-[#d90f12] hover:text-white text-base px-6 py-2"
               onClick={handleCallClick}
             >
-              <Link href="tel:+917436856789">+91 7436856789</Link>
+              <Link href="tel:+917358034097">+91 7358034097</Link>
             </Button>
             <Button 
               className="bg-[#d90f12] text-white hover:bg-[#b80d0f] text-base px-6 py-2"
@@ -93,8 +93,8 @@ export function Navbar() {
               className="bg-[#d90f12] text-white hover:bg-[#b80d0f] text-sm px-5 py-3 h-auto min-h-[44px]"
               onClick={handleMobileCallClick}
             >
-              <Link href="tel:+917436856789" className="flex items-center justify-center">
-                +91 7436856789
+              <Link href="tel:+917358034097" className="flex items-center justify-center">
+                +91 7358034097
               </Link>
             </Button>
           </div>

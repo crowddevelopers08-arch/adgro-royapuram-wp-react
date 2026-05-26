@@ -60,7 +60,7 @@ First Floor, No.187, MS Koil St, above Time emporium, Somu Nagar, Royapuram, Che
 
                   <div className="flex gap-4 items-center">
                     <Phone className="h-5 w-5 text-white" />
-                    <span className="text-[15px] text-white/90">7436856789</span>
+                    <span className="text-[15px] text-white/90">7358034097</span>
                   </div>
 
                   <div className="flex gap-3 items-center">
@@ -107,9 +107,9 @@ First Floor, No.187, MS Koil St, above Time emporium, Somu Nagar, Royapuram, Che
   <div className="flex h-14">
     {/* Call Button (Left) */}
     <a
-      href="tel:+917436856789"
+      href="tel:+917358034097"
       className="flex-1 flex items-center justify-center gap-2 bg-[#e10b0b] text-white active:bg-[#c90909] transition-colors"
-      aria-label="Call 7436856789"
+      aria-label="Call 7358034097"
     >
       <div className="flex flex-col items-center justify-center">
         <Phone className="w-5 h-5 mb-0.5" />

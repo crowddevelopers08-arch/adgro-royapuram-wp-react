@@ -122,7 +122,7 @@ export default function SimplePrivacyPolicyPage() {
               If you have questions or concerns about this Privacy Policy, please contact us:
             </p>
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-gray-700 mb-2"><span className="font-medium">Phone:</span> +91 7436856789</p>
+              <p className="text-gray-700 mb-2"><span className="font-medium">Phone:</span> +91 7358034097</p>
             </div>
             <div className="mt-6 p-4 bg-red-50 rounded-lg">
               <p className="text-center text-gray-700">

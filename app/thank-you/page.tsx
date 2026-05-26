@@ -54,10 +54,10 @@ export default function SimpleThankYouPage() {
               Need help immediately?
             </p>
             <a 
-              href="tel:+917436856789" 
+              href="tel:+917358034097" 
               className="text-xl font-bold text-red-600 hover:text-red-700"
             >
-              Call: +91 7436856789
+              Call: +91 7358034097
             </a>
           </div>
 

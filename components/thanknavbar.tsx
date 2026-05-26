@@ -5,12 +5,12 @@ import Image from "next/image";
 
 type Props = {
   logoSrc?: string; // put your logo in /public and pass like "/grohair-logo.png"
-  phone?: string;   // "+91 7436856789"
+  phone?: string;   // "+91 7358034097"
 };
 
 export default function ThankTopBar({
   logoSrc = "https://ik.imagekit.io/5xfdb3p6jv/public/public/royalogo.jpg",
-  phone = "+91 7436856789",
+  phone = "+91 7358034097",
 }: Props) {
   const telHref = `tel:${phone.replace(/\s+/g, "")}`;
 
