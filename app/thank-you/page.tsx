@@ -21,6 +21,13 @@ export default function SimpleThankYouPage() {
           `,
         }}
       />
+      <Script
+        id="google-ads-conversion-tracking-2"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `gtag('event', 'conversion', {'send_to': 'AW-17571736679/_TvwCKCM6I0cEOfY7bpB'});`,
+        }}
+      />
       
       <ThankTopBar />
       <section className="w-full min-h-[80vh] flex items-center justify-center bg-white py-8 max-[470px]:py-6">
